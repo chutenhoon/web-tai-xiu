@@ -949,6 +949,9 @@
                     if(typeof data.score === 'number' && data.score !== app.user.score) {
                          app.animateBalance(data.score);
                          app.user.score = data.score;
+                         if(app.profile.activeTab === 'bank' && $('#view-profile').classList.contains('active')) {
+                             app.profile.loadBank(true);
+                         }
                     }
                     if(typeof data.totalWins === 'number') app.user.totalWins = data.totalWins;
                     if(typeof data.maxWin === 'number') app.user.bestWin = data.maxWin;
@@ -1246,6 +1249,7 @@
                 $('#dash-id').textContent = this.user.id;
                 const scoreStr = '$ ' + this.user.score.toLocaleString();
                 $('#dash-score').textContent = scoreStr;
+                $('#bank-balance').textContent = scoreStr; 
                 $$('.user-balance-display').forEach(el => el.textContent = scoreStr);
             },
 
