@@ -356,6 +356,39 @@
             border-radius: 0;
         }
         #tradeChart { cursor: crosshair; touch-action: none; }
+        
+        .treasure-map {
+            width: 100%; aspect-ratio: 1;
+            background: #2b2b2e; border: 2px solid #5a4d3b;
+            border-radius: 12px; position: relative;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden; cursor: crosshair;
+            background-image: radial-gradient(circle at 30% 30%, #3a3a3e 0%, #2b2b2e 100%);
+        }
+        .treasure-map::before {
+            content: ''; position: absolute; inset: 0;
+            background-image: repeating-linear-gradient(45deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 2px, transparent 2px, transparent 10px);
+            opacity: 0.5; pointer-events: none;
+        }
+        .x-mark {
+            position: absolute; width: 40px; height: 40px;
+            transform: translate(-50%, -50%);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Comic Sans MS', cursive; font-weight: 900; color: #8a3a3a;
+            font-size: 1.5rem; text-shadow: 1px 1px 0 rgba(255,255,255,0.2);
+            transition: 0.2s; cursor: pointer; z-index: 10;
+        }
+        .x-mark:hover { transform: translate(-50%, -50%) scale(1.1); color: #d64a4a; }
+        .x-mark:active { transform: translate(-50%, -50%) scale(0.95); }
+        .hole-revealed {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; animation: popReveal 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popReveal { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .res-win { color: #FFD700; filter: drop-shadow(0 0 5px gold); }
+        .res-loss { color: #555; filter: grayscale(1); }
+        .res-half { color: #F472B6; filter: drop-shadow(0 0 5px #F472B6); }
+        
         @media (min-width: 1024px) {
              #view-trading .flex-col {
                 max-width: 100% !important;
@@ -483,6 +516,17 @@
                             <p class="text-xs text-gray-500 mt-2 font-sans">Candles • Leverage • High Risk</p>
                         </div>
                         <div class="flex justify-end"><span class="text-green-400 text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Trade →</span></div>
+                    </div>
+                    
+                    <div onclick="app.gotoGame('treasure')" class="game-card p-6 rounded-lg cursor-pointer group flex flex-col justify-between h-40" style="border-color: #8a734b;">
+                        <div>
+                            <div class="flex justify-between items-start">
+                                <h3 class="font-serif text-2xl text-ivory italic group-hover:text-[#e0c080] transition-colors">Tìm Kho Báu</h3>
+                                <span class="text-[10px] border border-[#8a734b] text-[#e0c080] px-2 py-0.5 rounded uppercase">x36 Boom</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2 font-sans">Đào đất • May mắn • Nổ hũ</p>
+                        </div>
+                        <div class="flex justify-end"><span class="text-[#e0c080] text-sm uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Dig →</span></div>
                     </div>
 
                     <div class="mt-8 mb-4">
@@ -662,6 +706,50 @@
                             </button>
                         </div>
                     </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="view-treasure" class="view-section z-20">
+            <div class="absolute top-6 right-6 z-30 text-right">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Balance</p>
+                <p class="text-gold font-serif text-xl user-balance-display">$ 0</p>
+            </div>
+            <div class="absolute top-6 left-6 z-30 flex gap-3">
+                <button onclick="app.switchView('view-hall')" class="text-gold font-serif italic hover:opacity-70 text-lg">← Exit</button>
+                <div class="sound-toggle-btn sound-icon-game" onclick="app.audio.toggle()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+            </div>
+
+            <div class="w-full h-full flex flex-col items-center p-6 py-12 bg-[#1a1510]">
+                <h2 class="font-serif text-3xl text-[#e0c080] italic mt-8">Treasure Hunt</h2>
+                <div class="text-xs text-gray-500 uppercase tracking-widest mb-6">4 Holes • 1 Win x36 • 2 Lose 100% • 1 Lose 50%</div>
+
+                <div class="w-full max-w-sm flex-1 flex flex-col justify-center">
+                    <div id="treasure-land" class="treasure-map mb-4">
+                        <!-- Holes generated via JS -->
+                    </div>
+                    <div id="treasure-msg" class="h-8 text-center text-[#e0c080] font-serif italic text-xl opacity-0 transition-opacity">
+                        Choose wisely...
+                    </div>
+                </div>
+
+                <div class="w-full mt-auto space-y-4">
+                    <div class="w-full max-w-xs mx-auto mb-4 bg-[#2b2b2e] p-3 rounded-lg border border-[#5a4d3b]">
+                        <div class="relative mb-3">
+                            <input type="number" id="treasure-bet-input" class="input-lux text-center text-2xl font-bold bg-transparent border-none p-0 text-[#e0c080]" value="100">
+                        </div>
+                        <div class="grid grid-cols-5 gap-1">
+                            <button onclick="app.setBet('treasure', 100)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">100</button>
+                            <button onclick="app.setBet('treasure', 500)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">500</button>
+                            <button onclick="app.setBet('treasure', 1000)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">1K</button>
+                            <button onclick="app.setBet('treasure', 5000)" class="btn-preset text-[#bba580] hover:text-[#e0c080]">5K</button>
+                            <button onclick="app.setBet('treasure', 'ALL')" class="btn-preset text-gold border-gold/30">ALL</button>
+                        </div>
+                    </div>
+
+                    <button id="btn-treasure-start" onclick="app.treasure.start()" class="btn-lux w-full border-[#e0c080] text-[#e0c080] font-bold hover:bg-[#e0c080]/10 hover:shadow-[0_0_20px_rgba(224,192,128,0.3)]">START GAME</button>
                 </div>
             </div>
         </section>
@@ -864,6 +952,7 @@
                 if(game === 'tx') inputId = 'tx-bet-input';
                 else if(game === 'bj') inputId = 'bj-bet-input';
                 else if(game === 'slot') inputId = 'slot-bet-input';
+                else if(game === 'treasure') inputId = 'treasure-bet-input';
                 
                 const input = $(`#${inputId}`);
                 if(!input) return;
@@ -1170,12 +1259,12 @@
                     const resDiv = $('#tx-result');
                     
                     if(won) {
-                        const profit = amount; 
-                        app.recordTx(profit, 'Tai Xiu');
+                        const payout = amount * 2;
+                        app.processGameEnd(payout, amount, 'Tai Xiu');
                         msgEl.innerText = "CHIẾN THẮNG!";
                         msgEl.className = "font-serif text-3xl italic text-green-400";
                     } else {
-                        app.recordTx(-amount, 'Tai Xiu');
+                        app.processGameEnd(0, amount, 'Tai Xiu');
                         msgEl.innerText = "THẤT BẠI";
                         msgEl.className = "font-serif text-3xl italic text-red-500";
                     }
@@ -1338,20 +1427,19 @@
                     
                     if(res === 'WIN') {
                         const winAmt = this.betAmount * 2;
-                        app.recordTx(this.betAmount, 'Blackjack'); 
+                        app.processGameEnd(winAmt, this.betAmount, 'Blackjack');
                         msgEl.innerText = "YOU WIN!";
                         msgEl.className = "font-serif text-3xl italic text-green-400 shadow-black drop-shadow-lg";
                     } else if (res === 'BUST') {
-                        app.recordTx(-this.betAmount, 'Blackjack');
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "BUST!";
                         msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else if (res === 'LOSE') {
-                        app.recordTx(-this.betAmount, 'Blackjack');
+                        app.processGameEnd(0, this.betAmount, 'Blackjack');
                         msgEl.innerText = "DEALER WINS";
                         msgEl.className = "font-serif text-3xl italic text-red-500 shadow-black drop-shadow-lg";
                     } else {
-                        app.user.score += this.betAmount; 
-                        app.animateBalance(app.user.score);
+                        app.processGameEnd(this.betAmount, this.betAmount, 'Blackjack');
                         msgEl.innerText = "PUSH";
                         msgEl.className = "font-serif text-3xl italic text-gray-300 shadow-black drop-shadow-lg";
                     }
@@ -1440,23 +1528,32 @@
                     const area = $('#slot-msg-area');
                     
                     if(allSame) {
-                        const mult = result[0].val * 5; 
-                        const win = amount * mult;
-                        app.recordTx(win - amount, 'Slots'); 
+                        const winAmt = amount * result[0].val * 5; 
+                        // Fix: Return Stake + Win Amount
+                        // Standard Slot math: Payout = Win Amount. 
+                        // But user request: "cộng cả tiền cược + tiền thắng".
+                        // Assuming the multiplier implies "Profit Multiplier" or user wants stake returned on top of win.
+                        // Let's assume standard behavior: Payout = Total Return. 
+                        // If multiplier is 5x, Payout is 5x. Profit is 4x.
+                        // User complained "chỉ cộng mỗi tiền thắng" -> implies logic was mistakenly just adding profit.
+                        // Let's treat the calculated 'winAmt' as the total payout.
+                        // AND ensuring we credit the full payout to the wallet.
+                        
+                        app.processGameEnd(winAmt, amount, 'Slots');
                         msgEl.innerText = "JACKPOT!";
                         msgEl.className = "font-serif text-3xl italic text-gold";
-                        subEl.innerText = `Win $ ${win.toLocaleString()}`;
+                        subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                         $('.win-line').style.display = 'block';
-                        app.triggerWinFx(win);
+                        app.triggerWinFx(winAmt);
                     } else if (result[0].id === result[1].id || result[1].id === result[2].id || result[0].id === result[2].id) {
                          // Small win for pair
-                         const win = Math.floor(amount * 1.5);
-                         app.recordTx(win - amount, 'Slots');
+                         const winAmt = Math.floor(amount * 1.5);
+                         app.processGameEnd(winAmt, amount, 'Slots');
                          msgEl.innerText = "NICE!";
                          msgEl.className = "font-serif text-3xl italic text-purple-300";
-                         subEl.innerText = `Win $ ${win.toLocaleString()}`;
+                         subEl.innerText = `Win $ ${winAmt.toLocaleString()}`;
                     } else {
-                        app.recordTx(-amount, 'Slots');
+                        app.processGameEnd(0, amount, 'Slots');
                         msgEl.innerText = "Try Again";
                         msgEl.className = "font-serif text-2xl italic text-gray-400";
                         subEl.innerText = "";
@@ -1466,6 +1563,132 @@
                     this.isSpinning = false;
                     $('#btn-spin').disabled = false;
                     $('#btn-spin').style.opacity = '1';
+                }
+            },
+            
+            treasure: {
+                isPlaying: false,
+                holes: [],
+                betAmount: 0,
+
+                init() {
+                    this.renderMap();
+                },
+
+                renderMap() {
+                    const land = $('#treasure-land');
+                    land.innerHTML = '';
+                    this.holes.forEach((h, index) => {
+                        const el = document.createElement('div');
+                        el.className = 'x-mark';
+                        el.style.left = h.x + '%';
+                        el.style.top = h.y + '%';
+                        el.innerHTML = 'X';
+                        el.onclick = () => this.dig(index, el);
+                        land.appendChild(el);
+                    });
+                },
+
+                start() {
+                    if (this.isPlaying) return;
+                    const amount = parseInt($('#treasure-bet-input').value);
+                    if (!app.checkBalance(amount)) return;
+
+                    app.audio.playClick();
+                    this.betAmount = amount;
+                    app.user.score -= amount;
+                    app.animateBalance(app.user.score);
+                    this.isPlaying = true;
+                    
+                    $('#btn-treasure-start').classList.add('opacity-30', 'pointer-events-none');
+                    $('#treasure-msg').style.opacity = '1';
+                    $('#treasure-msg').innerText = "Choose a spot...";
+                    $('#treasure-msg').className = "h-8 text-center text-[#e0c080] font-serif italic text-xl transition-opacity";
+                    $('#treasure-bet-input').disabled = true;
+
+                    // Generate random holes
+                    this.holes = [];
+                    const types = ['WIN_36', 'LOSS_100', 'LOSS_100', 'LOSS_50'];
+                    // Shuffle types
+                    for (let i = types.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [types[i], types[j]] = [types[j], types[i]];
+                    }
+
+                    // Generate positions preventing overlap
+                    for (let i = 0; i < 4; i++) {
+                        let x, y, valid = false;
+                        while (!valid) {
+                            x = 15 + Math.random() * 70;
+                            y = 15 + Math.random() * 70;
+                            valid = true;
+                            for (let h of this.holes) {
+                                const dist = Math.hypot(h.x - x, h.y - y);
+                                if (dist < 20) valid = false;
+                            }
+                        }
+                        this.holes.push({ x, y, type: types[i], revealed: false });
+                    }
+                    this.renderMap();
+                },
+
+                dig(index, el) {
+                    if (!this.isPlaying || this.holes[index].revealed) return;
+                    
+                    this.isPlaying = false;
+                    const hole = this.holes[index];
+                    hole.revealed = true;
+                    
+                    // Reveal all
+                    const land = $('#treasure-land');
+                    const allEls = land.children;
+
+                    for(let i=0; i<4; i++) {
+                        const h = this.holes[i];
+                        const div = allEls[i];
+                        div.style.pointerEvents = 'none';
+                        
+                        let icon = '';
+                        let cls = '';
+                        
+                        if (h.type === 'WIN_36') { icon = '👑'; cls = 'res-win'; }
+                        else if (h.type === 'LOSS_50') { icon = '💔'; cls = 'res-half'; }
+                        else { icon = '💀'; cls = 'res-loss'; }
+                        
+                        div.innerHTML = `<div class="hole-revealed ${cls}">${icon}</div>`;
+                    }
+
+                    const msgEl = $('#treasure-msg');
+                    
+                    if (hole.type === 'WIN_36') {
+                        // Win x36: Payout = Bet * 36
+                        const payout = this.betAmount * 36;
+                        app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
+                        
+                        msgEl.innerText = "JACKPOT x36!";
+                        msgEl.className = "h-8 text-center text-gold font-serif italic text-3xl font-bold drop-shadow-md";
+                        app.triggerWinFx(payout);
+                    } else if (hole.type === 'LOSS_50') {
+                        // Loss 50%: User gets back 50% of bet
+                        const payout = Math.floor(this.betAmount * 0.5);
+                        app.processGameEnd(payout, this.betAmount, 'Treasure Hunt');
+                        
+                        msgEl.innerText = "Lost 50%";
+                        msgEl.className = "h-8 text-center text-pink-400 font-serif italic text-xl";
+                        app.triggerLoseFx(this.betAmount - payout);
+                    } else {
+                        // Loss 100%: User gets back 0
+                        app.processGameEnd(0, this.betAmount, 'Treasure Hunt');
+                        
+                        msgEl.innerText = "Busted!";
+                        msgEl.className = "h-8 text-center text-red-500 font-serif italic text-xl";
+                        app.audio.playLose();
+                    }
+
+                    setTimeout(() => {
+                        $('#btn-treasure-start').classList.remove('opacity-30', 'pointer-events-none');
+                        $('#treasure-bet-input').disabled = false;
+                    }, 1000);
                 }
             },
 
@@ -1751,13 +1974,15 @@
                         this.currentPrice = p;
                         this.currentCandle = { o: p, h: p, l: p, c: p, v: 0, t: now };
                         
+                        // Fix for scroll: attach listeners to canvas, not window
                         cvs.addEventListener('mousedown', e => this.startDrag(e));
                         window.addEventListener('mousemove', e => this.drag(e));
                         window.addEventListener('mouseup', () => this.endDrag());
                         
+                        // Fix touch scrolling blocking on mobile
                         cvs.addEventListener('touchstart', e => this.handleTouchStart(e), {passive: false});
-                        window.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
-                        window.addEventListener('touchend', e => this.handleTouchEnd(e));
+                        cvs.addEventListener('touchmove', e => this.handleTouchMove(e), {passive: false});
+                        cvs.addEventListener('touchend', e => this.handleTouchEnd(e));
                         
                         cvs.addEventListener('wheel', e => this.zoom(e), {passive: false});
 
@@ -1772,7 +1997,8 @@
                 
                 drag(e) {
                     if(!this.isDragging) return;
-                    e.preventDefault(); 
+                    // Do NOT call preventDefault here if attached to window for mousemove
+                    // But for touchmove on canvas, we do.
                     const x = e.touches ? e.touches[0].clientX : e.clientX;
                     const dx = x - this.lastX;
                     this.offsetX += dx;
@@ -1790,6 +2016,9 @@
                 },
                 
                 handleTouchStart(e) {
+                    // preventDefault on canvas ensures scroll doesn't happen when touching chart
+                    // But we want page scroll elsewhere. Since listener is on cvs, this is fine.
+                    // e.preventDefault(); // Optional depending on behavior desired.
                     if (e.touches.length === 2) {
                         this.isDragging = false;
                         const dist = Math.hypot(
@@ -1804,7 +2033,8 @@
                 },
 
                 handleTouchMove(e) {
-                    e.preventDefault();
+                    // Prevent page scroll only when interacting with chart
+                    e.preventDefault(); 
                     if (e.touches.length === 2 && this.initialPinchDist) {
                         const dist = Math.hypot(
                             e.touches[0].clientX - e.touches[1].clientX,
@@ -1897,8 +2127,8 @@
                         payout = this.activeOrder.bet + pnl;
                     }
                     
+                    app.processGameEnd(payout, this.activeOrder.bet, 'Trading 30s');
                     const profit = payout - this.activeOrder.bet;
-                    app.recordTx(Math.round(profit), 'Trading 30s');
                     
                     const box = document.getElementById('trade-result-overlay');
                     const title = document.getElementById('trade-res-title');
@@ -2305,6 +2535,9 @@
                              app.trading.chartCtx.scale(dpr, dpr);
                          }, 50);
                     }
+                    if(id === 'view-treasure') {
+                        app.treasure.init();
+                    }
                 }, 100); 
             },
 
@@ -2347,16 +2580,29 @@
                 }
             },
 
+            processGameEnd(payout, bet, game) {
+                const pnl = payout - bet;
+                this.user.score += payout; 
+                
+                // History logs profit/loss (not total payout)
+                this.user.history.push({ date: Date.now(), amount: pnl, game: game });
+                if(this.user.history.length > 200) this.user.history.shift();
+                this.saveUser();
+                
+                this.api.sendTx(pnl, game);
+                
+                app.animateBalance(this.user.score);
+            },
+
+            // Legacy support for non-game transaction (like transfer)
             recordTx(amount, game) {
+                // This method blindly adds amount to score. Used for transfers.
+                // Not used for games anymore to avoid the double-deduction logic confusion.
                 this.user.score += amount;
                 this.user.history.push({ date: Date.now(), amount: amount, game: game });
                 if(this.user.history.length > 200) this.user.history.shift();
                 this.saveUser();
                 this.api.sendTx(amount, game);
-                
-                if(amount > 0) this.triggerWinFx(amount);
-                else if(amount < 0) this.triggerLoseFx(amount);
-                
                 app.animateBalance(this.user.score);
             },
 
@@ -2430,6 +2676,7 @@
                 else if(type === 'blackjack') { this.blackjack.reset(); this.switchView('view-blackjack'); } 
                 else if(type === 'slots') { this.slots.reset(); this.switchView('view-slots'); } 
                 else if(type === 'trading') { this.switchView('view-trading'); }
+                else if(type === 'treasure') { this.switchView('view-treasure'); }
             },
 
             showProfile() {
